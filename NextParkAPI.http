@@ -1,0 +1,6 @@
+@NextParkAPI_HostAddress = http://localhost:5191
+
+GET {{NextParkAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
