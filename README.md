@@ -9,7 +9,6 @@ API RESTful desenvolvida para o sistema de **Gestão de Motos no Pátio da Mottu
 
 - Cadastro, listagem e remoção de motos
 - Vinculação de motos a vagas existentes
-- Cadastro e listagem de vagas
 - Swagger UI para documentação e testes
 
 ---
@@ -30,11 +29,9 @@ API RESTful desenvolvida para o sistema de **Gestão de Motos no Pátio da Mottu
 ```
 NextParkAPI/
 ├── Controllers/
-│   ├── MotoController.cs
-│   └── VagaController.cs
+│   └── MotoController.cs
 ├── Models/
-│   ├── Moto.cs
-│   └── Vaga.cs
+│   └── Moto.cs
 ├── Data/
 │   └── NextParkContext.cs
 ├── Program.cs
@@ -54,14 +51,6 @@ NextParkAPI/
 | POST   | /api/Moto      | Cadastra uma nova moto        |
 | PUT    | /api/Moto/{id} | Atualiza dados da moto        |
 | DELETE | /api/Moto/{id} | Remove uma moto do sistema    |
-
-### 🔧 Vagas
-
-| Método | Rota           | Descrição                     |
-|--------|----------------|-------------------------------|
-| GET    | /api/Vaga      | Lista todas as vagas          |
-| GET    | /api/Vaga/{id} | Busca vaga pelo ID            |
-| POST   | /api/Vaga      | Cadastra uma nova vaga        |
 
 ---
 
@@ -98,7 +87,7 @@ https://localhost:{porta}/swagger
 
 ## 💡 Observações
 
-- O cadastro de motos depende da existência de vagas válidas.
+- O cadastro de motos depende da existência de vagas válidas no banco.
 - O projeto segue o padrão RESTful com boas práticas.
 - Ideal para simulação de controle de pátios com múltiplas filiais.
 
