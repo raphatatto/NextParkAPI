@@ -3,7 +3,7 @@ using NextParkAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ? Serviços
+// ? Serviï¿½os
 builder.Services.AddControllers();
 builder.Services.AddDbContext<NextParkContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("OracleDb")));

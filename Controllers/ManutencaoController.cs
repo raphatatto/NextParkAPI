@@ -50,8 +50,8 @@ namespace NextParkAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ResourceResponse<Manutencao>>> CreateManutencao(Manutencao manutencao)
         {
-            var motoExiste = await _context.Motos.AnyAsync(m => m.IdMoto == manutencao.IdMoto);
-            if (!motoExiste)
+            var moto = await _context.Motos.FindAsync(manutencao.IdMoto);
+            if (moto is null)
             {
                 return BadRequest("A moto informada não existe.");
             }
@@ -70,8 +70,8 @@ namespace NextParkAPI.Controllers
             var exists = await _context.Manutencoes.AnyAsync(m => m.IdManutencao == id);
             if (!exists) return NotFound();
 
-            var motoExiste = await _context.Motos.AnyAsync(m => m.IdMoto == manutencao.IdMoto);
-            if (!motoExiste)
+            var moto = await _context.Motos.FindAsync(manutencao.IdMoto);
+            if (moto is null)
             {
                 return BadRequest("A moto informada não existe.");
             }
