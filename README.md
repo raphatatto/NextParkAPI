@@ -92,11 +92,3 @@
         }'
   ```
 
----
-
-## ✅ Comando para Rodar os Testes
-```bash
-dotnet test
-```
-
-Caso ainda não exista um projeto de testes configurado, o comando acima serve como referência para futuras automações.
