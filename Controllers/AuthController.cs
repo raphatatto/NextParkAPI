@@ -4,6 +4,10 @@ using NextParkAPI.Data;
 using NextParkAPI.Models;
 using NextParkAPI.Models.Requests;
 using NextParkAPI.Utils;
+using Oracle.ManagedDataAccess.Client;
+using System;
+using System.Data;
+using System.Threading.Tasks;
 
 namespace NextParkAPI.Controllers
 {
@@ -18,12 +22,12 @@ namespace NextParkAPI.Controllers
             _context = context;
         }
 
-        /// <summary>
-        /// Registra um novo usuário na plataforma.
-        /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
+            var emailAlreadyUsed = await EmailExistsAsync(request.Email);
+
+            if (emailAlreadyUsed)
             var existingUsuario = await _context.Usuarios
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.NrEmail == request.Email);
@@ -99,6 +103,30 @@ namespace NextParkAPI.Controllers
                 usuarioId = login.IdUsuario,
                 email = login.NrEmail
             });
+        }
+
+        private async Task<bool> EmailExistsAsync(string email)
+        {
+            var connectionString = _context.Database.GetConnectionString();
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException("Database connection string is not configured.");
+            }
+
+            await using var connection = new OracleConnection(connectionString);
+            await connection.OpenAsync();
+
+            await using var command = connection.CreateCommand();
+            command.BindByName = true;
+            command.CommandText = "SELECT COUNT(1) FROM TB_NEXTPARK_USUARIO WHERE NR_EMAIL = :email";
+
+            var emailParameter = new OracleParameter("email", OracleDbType.Varchar2, email, ParameterDirection.Input);
+            command.Parameters.Add(emailParameter);
+
+            var result = await command.ExecuteScalarAsync();
+
+            return Convert.ToInt32(result) > 0;
         }
     }
 }
