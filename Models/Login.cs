@@ -8,7 +8,7 @@ namespace NextParkAPI.Models
     {
         [Key]
         [Column("ID_LOGIN")]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int IdLogin { get; set; }
 
         [Required]

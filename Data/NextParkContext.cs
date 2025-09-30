@@ -54,7 +54,7 @@ namespace NextParkAPI.Data
 
             modelBuilder.Entity<Usuario>().HasKey(u => u.IdUsuario);
 
-            modelBuilder.Entity<Usuario>().Property(u => u.IdUsuario).HasColumnName("ID_USUARIO");
+            modelBuilder.Entity<Usuario>().Property(u => u.IdUsuario).HasColumnName("ID_USUARIO").ValueGeneratedNever();
             modelBuilder.Entity<Usuario>().Property(u => u.NrEmail).HasColumnName("NR_EMAIL").HasMaxLength(100);
 
             modelBuilder.Entity<Usuario>()
@@ -65,7 +65,7 @@ namespace NextParkAPI.Data
 
             modelBuilder.Entity<Login>().HasKey(l => l.IdLogin);
 
-            modelBuilder.Entity<Login>().Property(l => l.IdLogin).HasColumnName("ID_LOGIN");
+            modelBuilder.Entity<Login>().Property(l => l.IdLogin).HasColumnName("ID_LOGIN").ValueGeneratedNever();
             modelBuilder.Entity<Login>().Property(l => l.IdUsuario).HasColumnName("ID_USUARIO");
             modelBuilder.Entity<Login>().Property(l => l.NrEmail).HasColumnName("NR_EMAIL").HasMaxLength(100);
             modelBuilder.Entity<Login>().Property(l => l.DsSenha).HasColumnName("DS_SENHA").HasMaxLength(255);

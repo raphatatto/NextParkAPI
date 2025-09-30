@@ -32,8 +32,20 @@ namespace NextParkAPI.Controllers
                 return Conflict(new { message = "E-mail já cadastrado." });
             }
 
+            var connectionString = GetConnectionStringOrThrow();
+
+            var usuarioId = await OraclePrimaryKeyGenerator.GenerateAsync(
+                connectionString,
+                "TB_NEXTPARK_USUARIO",
+                "ID_USUARIO",
+                "SEQ_TB_NEXTPARK_USUARIO",
+                "TB_NEXTPARK_USUARIO_SEQ",
+                "SEQ_NEXTPARK_USUARIO",
+                "SEQ_USUARIO");
+
             var usuario = new Usuario
             {
+                IdUsuario = usuarioId,
                 NrEmail = request.Email
             };
 
@@ -43,8 +55,18 @@ namespace NextParkAPI.Controllers
                 _context.Usuarios.Add(usuario);
                 await _context.SaveChangesAsync();
 
+                var loginId = await OraclePrimaryKeyGenerator.GenerateAsync(
+                    connectionString,
+                    "TB_NEXTPARK_LOGIN",
+                    "ID_LOGIN",
+                    "SEQ_TB_NEXTPARK_LOGIN",
+                    "TB_NEXTPARK_LOGIN_SEQ",
+                    "SEQ_NEXTPARK_LOGIN",
+                    "SEQ_LOGIN");
+
                 var login = new Login
                 {
+                    IdLogin = loginId,
                     IdUsuario = usuario.IdUsuario,
                     NrEmail = request.Email,
                     DsSenha = PasswordHasher.HashPassword(request.Password)
@@ -98,14 +120,20 @@ namespace NextParkAPI.Controllers
             });
         }
 
-        private async Task<bool> EmailExistsAsync(string email)
+        private string GetConnectionStringOrThrow()
         {
             var connectionString = _context.Database.GetConnectionString();
-
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new InvalidOperationException("Database connection string is not configured.");
             }
+
+            return connectionString;
+        }
+
+        private async Task<bool> EmailExistsAsync(string email)
+        {
+            var connectionString = GetConnectionStringOrThrow();
 
             await using var connection = new OracleConnection(connectionString);
             await connection.OpenAsync();
