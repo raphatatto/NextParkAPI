@@ -3,11 +3,9 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NextParkAPI.Data;
-using Swashbuckle.AspNetCore.Annotations;
-
+using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
 
-// ? Servi�os
 builder.Services.AddControllers();
 builder.Services.AddDbContext<NextParkContext>(options =>
 {
@@ -52,23 +50,36 @@ builder.Services.AddSwaggerGen(options =>
         options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
     }
 });
-
-builder.WebHost.UseUrls("http://0.0.0.0:8080");
+var port = Environment.GetEnvironmentVariable("WEBSITES_PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 var app = builder.Build();
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// ? Pipeline
+// Migração só em prod (como você já fez)
 if (app.Environment.IsProduction())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<NextParkContext>();
-    db.Database.Migrate(); 
+    db.Database.Migrate();
 }
-app.UseHttpsRedirection();
+
+// Forwarded headers (Azure) — opção por código
+var fwd = new ForwardedHeadersOptions {
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
+};
+fwd.KnownNetworks.Clear();
+fwd.KnownProxies.Clear();
+app.UseForwardedHeaders(fwd);
+
+// HTTPS redirect (só em prod, se preferir)
+if (app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseAuthorization();
-
-app.MapControllers(); 
-
+app.MapControllers();
 app.Run();

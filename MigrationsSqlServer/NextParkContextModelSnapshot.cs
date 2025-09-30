@@ -8,7 +8,7 @@ using NextParkAPI.Data;
 
 #nullable disable
 
-namespace NextParkAPI.Data.Migrations
+namespace NextParkAPI.MigrationsSqlServer
 {
     [DbContext(typeof(NextParkContext))]
     partial class NextParkContextModelSnapshot : ModelSnapshot
@@ -21,6 +21,38 @@ namespace NextParkAPI.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("NextParkAPI.Models.Login", b =>
+                {
+                    b.Property<int>("IdLogin")
+                        .HasColumnType("int")
+                        .HasColumnName("ID_LOGIN");
+
+                    b.Property<string>("DsSenha")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("DS_SENHA");
+
+                    b.Property<int>("IdUsuario")
+                        .HasColumnType("int")
+                        .HasColumnName("ID_USUARIO");
+
+                    b.Property<string>("NrEmail")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("NR_EMAIL");
+
+                    b.HasKey("IdLogin");
+
+                    b.HasIndex("IdUsuario");
+
+                    b.HasIndex("NrEmail")
+                        .IsUnique();
+
+                    b.ToTable("TB_NEXTPARK_LOGIN", (string)null);
+                });
 
             modelBuilder.Entity("NextParkAPI.Models.Manutencao", b =>
                 {
@@ -53,41 +85,6 @@ namespace NextParkAPI.Data.Migrations
                     b.HasIndex("IdMoto");
 
                     b.ToTable("TB_NEXTPARK_MANUTENCAO", (string)null);
-                });
-
-            modelBuilder.Entity("NextParkAPI.Models.Login", b =>
-                {
-                    b.Property<int>("IdLogin")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("ID_LOGIN");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdLogin"));
-
-                    b.Property<string>("DsSenha")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("DS_SENHA");
-
-                    b.Property<int>("IdUsuario")
-                        .HasColumnType("int")
-                        .HasColumnName("ID_USUARIO");
-
-                    b.Property<string>("NrEmail")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("NR_EMAIL");
-
-                    b.HasKey("IdLogin");
-
-                    b.HasIndex("IdUsuario");
-
-                    b.HasIndex("NrEmail")
-                        .IsUnique();
-
-                    b.ToTable("TB_NEXTPARK_LOGIN", (string)null);
                 });
 
             modelBuilder.Entity("NextParkAPI.Models.Moto", b =>
@@ -125,6 +122,26 @@ namespace NextParkAPI.Data.Migrations
                     b.ToTable("TB_NEXTPARK_MOTO", (string)null);
                 });
 
+            modelBuilder.Entity("NextParkAPI.Models.Usuario", b =>
+                {
+                    b.Property<int>("IdUsuario")
+                        .HasColumnType("int")
+                        .HasColumnName("ID_USUARIO");
+
+                    b.Property<string>("NrEmail")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("NR_EMAIL");
+
+                    b.HasKey("IdUsuario");
+
+                    b.HasIndex("NrEmail")
+                        .IsUnique();
+
+                    b.ToTable("TB_NEXTPARK_USUARIO", (string)null);
+                });
+
             modelBuilder.Entity("NextParkAPI.Models.Vaga", b =>
                 {
                     b.Property<int>("IdVaga")
@@ -153,38 +170,6 @@ namespace NextParkAPI.Data.Migrations
                     b.ToTable("TB_NEXTPARK_VAGA", (string)null);
                 });
 
-            modelBuilder.Entity("NextParkAPI.Models.Usuario", b =>
-                {
-                    b.Property<int>("IdUsuario")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("ID_USUARIO");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdUsuario"));
-
-                    b.Property<string>("NrEmail")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("NR_EMAIL");
-
-                    b.HasKey("IdUsuario");
-
-                    b.HasIndex("NrEmail")
-                        .IsUnique();
-
-                    b.ToTable("TB_NEXTPARK_USUARIO", (string)null);
-                });
-
-            modelBuilder.Entity("NextParkAPI.Models.Manutencao", b =>
-                {
-                    b.HasOne("NextParkAPI.Models.Moto", null)
-                        .WithMany()
-                        .HasForeignKey("IdMoto")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("NextParkAPI.Models.Login", b =>
                 {
                     b.HasOne("NextParkAPI.Models.Usuario", "Usuario")
@@ -194,6 +179,15 @@ namespace NextParkAPI.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("NextParkAPI.Models.Manutencao", b =>
+                {
+                    b.HasOne("NextParkAPI.Models.Moto", null)
+                        .WithMany()
+                        .HasForeignKey("IdMoto")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("NextParkAPI.Models.Usuario", b =>

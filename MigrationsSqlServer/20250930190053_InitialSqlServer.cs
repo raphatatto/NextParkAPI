@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace NextParkAPI.Data.Migrations
+namespace NextParkAPI.MigrationsSqlServer
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialSqlServer : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -25,6 +25,18 @@ namespace NextParkAPI.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TB_NEXTPARK_MOTO", x => x.ID_MOTO);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TB_NEXTPARK_USUARIO",
+                columns: table => new
+                {
+                    ID_USUARIO = table.Column<int>(type: "int", nullable: false),
+                    NR_EMAIL = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TB_NEXTPARK_USUARIO", x => x.ID_USUARIO);
                 });
 
             migrationBuilder.CreateTable(
@@ -64,20 +76,63 @@ namespace NextParkAPI.Data.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "TB_NEXTPARK_LOGIN",
+                columns: table => new
+                {
+                    ID_LOGIN = table.Column<int>(type: "int", nullable: false),
+                    ID_USUARIO = table.Column<int>(type: "int", nullable: false),
+                    NR_EMAIL = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    DS_SENHA = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TB_NEXTPARK_LOGIN", x => x.ID_LOGIN);
+                    table.ForeignKey(
+                        name: "FK_TB_NEXTPARK_LOGIN_TB_NEXTPARK_USUARIO_ID_USUARIO",
+                        column: x => x.ID_USUARIO,
+                        principalTable: "TB_NEXTPARK_USUARIO",
+                        principalColumn: "ID_USUARIO",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TB_NEXTPARK_LOGIN_ID_USUARIO",
+                table: "TB_NEXTPARK_LOGIN",
+                column: "ID_USUARIO");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TB_NEXTPARK_LOGIN_NR_EMAIL",
+                table: "TB_NEXTPARK_LOGIN",
+                column: "NR_EMAIL",
+                unique: true);
+
             migrationBuilder.CreateIndex(
                 name: "IX_TB_NEXTPARK_MANUTENCAO_ID_MOTO",
                 table: "TB_NEXTPARK_MANUTENCAO",
                 column: "ID_MOTO");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TB_NEXTPARK_USUARIO_NR_EMAIL",
+                table: "TB_NEXTPARK_USUARIO",
+                column: "NR_EMAIL",
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "TB_NEXTPARK_LOGIN");
+
+            migrationBuilder.DropTable(
                 name: "TB_NEXTPARK_MANUTENCAO");
 
             migrationBuilder.DropTable(
                 name: "TB_NEXTPARK_VAGA");
+
+            migrationBuilder.DropTable(
+                name: "TB_NEXTPARK_USUARIO");
 
             migrationBuilder.DropTable(
                 name: "TB_NEXTPARK_MOTO");
