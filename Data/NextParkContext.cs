@@ -10,6 +10,8 @@ namespace NextParkAPI.Data
         public DbSet<Moto> Motos { get; set; }
         public DbSet<Vaga> Vagas { get; set; }
         public DbSet<Manutencao> Manutencoes { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Login> Logins { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +49,36 @@ namespace NextParkAPI.Data
                 .WithMany()
                 .HasForeignKey(m => m.IdMoto)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Usuario>().ToTable("TB_NEXTPARK_USUARIO");
+
+            modelBuilder.Entity<Usuario>().HasKey(u => u.IdUsuario);
+
+            modelBuilder.Entity<Usuario>().Property(u => u.IdUsuario).HasColumnName("ID_USUARIO");
+            modelBuilder.Entity<Usuario>().Property(u => u.NrEmail).HasColumnName("NR_EMAIL").HasMaxLength(100);
+
+            modelBuilder.Entity<Usuario>()
+                .HasIndex(u => u.NrEmail)
+                .IsUnique();
+
+            modelBuilder.Entity<Login>().ToTable("TB_NEXTPARK_LOGIN");
+
+            modelBuilder.Entity<Login>().HasKey(l => l.IdLogin);
+
+            modelBuilder.Entity<Login>().Property(l => l.IdLogin).HasColumnName("ID_LOGIN");
+            modelBuilder.Entity<Login>().Property(l => l.IdUsuario).HasColumnName("ID_USUARIO");
+            modelBuilder.Entity<Login>().Property(l => l.NrEmail).HasColumnName("NR_EMAIL").HasMaxLength(100);
+            modelBuilder.Entity<Login>().Property(l => l.DsSenha).HasColumnName("DS_SENHA").HasMaxLength(255);
+
+            modelBuilder.Entity<Login>()
+                .HasIndex(l => l.NrEmail)
+                .IsUnique();
+
+            modelBuilder.Entity<Login>()
+                .HasOne(l => l.Usuario)
+                .WithMany(u => u.Logins)
+                .HasForeignKey(l => l.IdUsuario)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
 
