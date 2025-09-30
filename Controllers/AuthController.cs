@@ -29,6 +29,8 @@ namespace NextParkAPI.Controllers
                 .FirstOrDefaultAsync(u => u.NrEmail == request.Email);
 
             if (existingUsuario is not null)
+            if (await _context.Usuarios.AnyAsync(u => u.NrEmail == request.Email))
+
             {
                 return Conflict(new { message = "E-mail já cadastrado." });
             }
