@@ -105,7 +105,7 @@ public class VagaController : ControllerBase
     public async Task<IActionResult> UpdateVaga(int id, Vaga vaga)
     {
         if (id != vaga.IdVaga) return BadRequest();
-        var exists = await _context.Vagas.AnyAsync(v => v.IdVaga == id);
+        var exists = await _context.Vagas.CountAsync(v => v.IdVaga == id) > 0;
         if (!exists) return NotFound();
         _context.Entry(vaga).State = EntityState.Modified;
         await _context.SaveChangesAsync();
