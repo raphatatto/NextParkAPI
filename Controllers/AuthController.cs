@@ -24,7 +24,13 @@ namespace NextParkAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
+            var existingUsuario = await _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.NrEmail == request.Email);
+
+            if (existingUsuario is not null)
             if (await _context.Usuarios.AnyAsync(u => u.NrEmail == request.Email))
+
             {
                 return Conflict(new { message = "E-mail já cadastrado." });
             }
