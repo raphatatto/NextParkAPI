@@ -112,7 +112,7 @@ public class ManutencaoController : ControllerBase
     {
         if (id != manutencao.IdManutencao) return BadRequest();
 
-        var exists = await _context.Manutencoes.AnyAsync(m => m.IdManutencao == id);
+        var exists = await _context.Manutencoes.CountAsync(m => m.IdManutencao == id) > 0;
         if (!exists) return NotFound();
 
         var moto = await _context.Motos.FindAsync(manutencao.IdMoto);

@@ -105,7 +105,7 @@ public class MotoController : ControllerBase
     public async Task<ActionResult> UpdateMoto(int id, Moto moto)
     {
         if (id != moto.IdMoto) return BadRequest();
-        var exists = await _context.Motos.AnyAsync(m => m.IdMoto == id);
+        var exists = await _context.Motos.CountAsync(m => m.IdMoto == id) > 0;
         if (!exists) return NotFound();
         _context.Entry(moto).State = EntityState.Modified;
         await _context.SaveChangesAsync();
