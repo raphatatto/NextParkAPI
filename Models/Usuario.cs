@@ -9,7 +9,6 @@ namespace NextParkAPI.Models
     {
         [Key]
         [Column("ID_USUARIO")]
-        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int IdUsuario { get; set; }
 
         [Required]

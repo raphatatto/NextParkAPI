@@ -2,21 +2,34 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using NextParkAPI.Data;
 using Oracle.ManagedDataAccess.Client;
 
 namespace NextParkAPI.Utils
 {
-    public static class OraclePrimaryKeyGenerator
+    public class OraclePrimaryKeyGenerator : IPrimaryKeyGenerator
     {
-        public static Task<int> GenerateAsync(
-            string connectionString,
+        public bool CanGenerate(string? providerName) =>
+            providerName?.IndexOf("Oracle", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        public async Task<int?> GenerateAsync(
+            NextParkContext context,
             string tableName,
             string columnName,
-            params string[] sequenceCandidates) =>
-            GenerateAsync(connectionString, tableName, columnName, (IReadOnlyCollection<string>)sequenceCandidates);
+            params string[] sequenceCandidates)
+        {
+            if (!CanGenerate(context.Database.ProviderName))
+            {
+                return null;
+            }
 
-        private static async Task<int> GenerateAsync(
-            string connectionString,
+            var connectionString = context.Database.GetConnectionString();
+            return await GenerateAsync(connectionString, tableName, columnName, (IReadOnlyCollection<string>)sequenceCandidates);
+        }
+
+        private static Task<int?> GenerateAsync(
+            string? connectionString,
             string tableName,
             string columnName,
             IReadOnlyCollection<string> sequenceCandidates)
@@ -26,13 +39,22 @@ namespace NextParkAPI.Utils
                 throw new InvalidOperationException("Database connection string is not configured.");
             }
 
+            return GenerateInternalAsync(connectionString, tableName, columnName, sequenceCandidates);
+        }
+
+        private static async Task<int?> GenerateInternalAsync(
+            string connectionString,
+            string tableName,
+            string columnName,
+            IReadOnlyCollection<string> sequenceCandidates)
+        {
             await using var connection = new OracleConnection(connectionString);
             await connection.OpenAsync();
 
             return await GenerateWithConnectionAsync(connection, tableName, columnName, sequenceCandidates);
         }
 
-        private static async Task<int> GenerateWithConnectionAsync(
+        private static async Task<int?> GenerateWithConnectionAsync(
             OracleConnection connection,
             string tableName,
             string columnName,
@@ -133,7 +155,7 @@ namespace NextParkAPI.Utils
             }
         }
 
-        private static async Task<int> GenerateFromTableAsync(OracleConnection connection, string tableName, string columnName)
+        private static async Task<int?> GenerateFromTableAsync(OracleConnection connection, string tableName, string columnName)
         {
             await using var command = connection.CreateCommand();
             command.CommandText = $"SELECT NVL(MAX({columnName}), 0) + 1 FROM {tableName}";

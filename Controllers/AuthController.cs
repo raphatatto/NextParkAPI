@@ -1,13 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NextParkAPI.Data;
 using NextParkAPI.Models;
 using NextParkAPI.Models.Requests;
 using NextParkAPI.Utils;
-using Oracle.ManagedDataAccess.Client;
-using System;
-using System.Data;
-using System.Threading.Tasks;
 
 namespace NextParkAPI.Controllers
 {
@@ -16,26 +16,37 @@ namespace NextParkAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly NextParkContext _context;
+        private readonly IReadOnlyCollection<IPrimaryKeyGenerator> _primaryKeyGenerators;
+        private readonly string? _providerName;
 
-        public AuthController(NextParkContext context)
+        public AuthController(NextParkContext context, IEnumerable<IPrimaryKeyGenerator> primaryKeyGenerators)
         {
             _context = context;
+            _primaryKeyGenerators = primaryKeyGenerators.ToArray();
+            _providerName = _context.Database.ProviderName;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var emailAlreadyUsed = await EmailExistsAsync(request.Email);
+            var emailAlreadyUsed = await _context.Usuarios
+                .AsNoTracking()
+                .AnyAsync(u => u.NrEmail == request.Email);
 
             if (emailAlreadyUsed)
             {
                 return Conflict(new { message = "E-mail já cadastrado." });
             }
 
-            var connectionString = GetConnectionStringOrThrow();
+            var primaryKeyGenerator = ResolvePrimaryKeyGenerator();
 
-            var usuarioId = await OraclePrimaryKeyGenerator.GenerateAsync(
-                connectionString,
+            var usuario = new Usuario
+            {
+                NrEmail = request.Email
+            };
+
+            var usuarioId = await primaryKeyGenerator.GenerateAsync(
+                _context,
                 "TB_NEXTPARK_USUARIO",
                 "ID_USUARIO",
                 "SEQ_TB_NEXTPARK_USUARIO",
@@ -43,11 +54,10 @@ namespace NextParkAPI.Controllers
                 "SEQ_NEXTPARK_USUARIO",
                 "SEQ_USUARIO");
 
-            var usuario = new Usuario
+            if (usuarioId.HasValue)
             {
-                IdUsuario = usuarioId,
-                NrEmail = request.Email
-            };
+                usuario.IdUsuario = usuarioId.Value;
+            }
 
             await using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -55,8 +65,8 @@ namespace NextParkAPI.Controllers
                 _context.Usuarios.Add(usuario);
                 await _context.SaveChangesAsync();
 
-                var loginId = await OraclePrimaryKeyGenerator.GenerateAsync(
-                    connectionString,
+                var loginId = await primaryKeyGenerator.GenerateAsync(
+                    _context,
                     "TB_NEXTPARK_LOGIN",
                     "ID_LOGIN",
                     "SEQ_TB_NEXTPARK_LOGIN",
@@ -66,11 +76,15 @@ namespace NextParkAPI.Controllers
 
                 var login = new Login
                 {
-                    IdLogin = loginId,
                     IdUsuario = usuario.IdUsuario,
                     NrEmail = request.Email,
                     DsSenha = PasswordHasher.HashPassword(request.Password)
                 };
+
+                if (loginId.HasValue)
+                {
+                    login.IdLogin = loginId.Value;
+                }
 
                 _context.Logins.Add(login);
                 await _context.SaveChangesAsync();
@@ -120,34 +134,17 @@ namespace NextParkAPI.Controllers
             });
         }
 
-        private string GetConnectionStringOrThrow()
+        private IPrimaryKeyGenerator ResolvePrimaryKeyGenerator()
         {
-            var connectionString = _context.Database.GetConnectionString();
-            if (string.IsNullOrWhiteSpace(connectionString))
+            var generator = _primaryKeyGenerators
+                .FirstOrDefault(g => g.CanGenerate(_providerName));
+
+            if (generator is null)
             {
-                throw new InvalidOperationException("Database connection string is not configured.");
+                throw new InvalidOperationException($"Nenhum gerador de chave primária configurado para o provedor '{_providerName}'.");
             }
 
-            return connectionString;
-        }
-
-        private async Task<bool> EmailExistsAsync(string email)
-        {
-            var connectionString = GetConnectionStringOrThrow();
-
-            await using var connection = new OracleConnection(connectionString);
-            await connection.OpenAsync();
-
-            await using var command = connection.CreateCommand();
-            command.BindByName = true;
-            command.CommandText = "SELECT COUNT(1) FROM TB_NEXTPARK_USUARIO WHERE NR_EMAIL = :email";
-
-            var emailParameter = new OracleParameter("email", OracleDbType.Varchar2, email, ParameterDirection.Input);
-            command.Parameters.Add(emailParameter);
-
-            var result = await command.ExecuteScalarAsync();
-
-            return Convert.ToInt32(result) > 0;
+            return generator;
         }
     }
 }

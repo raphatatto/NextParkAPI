@@ -1,9 +1,11 @@
+using System;
 using System.IO;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NextParkAPI.Data;
 using Microsoft.AspNetCore.HttpOverrides;
+using NextParkAPI.Utils;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -21,6 +23,10 @@ builder.Services.AddDbContext<NextParkContext>(options =>
         options.UseOracle(builder.Configuration.GetConnectionString("OracleDb"));
     }
 });
+
+builder.Services.AddScoped<IPrimaryKeyGenerator, OraclePrimaryKeyGenerator>();
+builder.Services.AddScoped<IPrimaryKeyGenerator, SqlServerPrimaryKeyGenerator>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

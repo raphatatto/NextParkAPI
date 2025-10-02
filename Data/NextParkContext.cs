@@ -1,4 +1,6 @@
+using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NextParkAPI.Models;
 
 namespace NextParkAPI.Data
@@ -54,7 +56,7 @@ namespace NextParkAPI.Data
 
             modelBuilder.Entity<Usuario>().HasKey(u => u.IdUsuario);
 
-            modelBuilder.Entity<Usuario>().Property(u => u.IdUsuario).HasColumnName("ID_USUARIO").ValueGeneratedNever();
+            var usuarioIdProperty = modelBuilder.Entity<Usuario>().Property(u => u.IdUsuario).HasColumnName("ID_USUARIO");
             modelBuilder.Entity<Usuario>().Property(u => u.NrEmail).HasColumnName("NR_EMAIL").HasMaxLength(100);
 
             modelBuilder.Entity<Usuario>()
@@ -65,7 +67,7 @@ namespace NextParkAPI.Data
 
             modelBuilder.Entity<Login>().HasKey(l => l.IdLogin);
 
-            modelBuilder.Entity<Login>().Property(l => l.IdLogin).HasColumnName("ID_LOGIN").ValueGeneratedNever();
+            var loginIdProperty = modelBuilder.Entity<Login>().Property(l => l.IdLogin).HasColumnName("ID_LOGIN");
             modelBuilder.Entity<Login>().Property(l => l.IdUsuario).HasColumnName("ID_USUARIO");
             modelBuilder.Entity<Login>().Property(l => l.NrEmail).HasColumnName("NR_EMAIL").HasMaxLength(100);
             modelBuilder.Entity<Login>().Property(l => l.DsSenha).HasColumnName("DS_SENHA").HasMaxLength(255);
@@ -80,7 +82,26 @@ namespace NextParkAPI.Data
                 .HasForeignKey(l => l.IdUsuario)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            ConfigureIdentityGeneration(usuarioIdProperty, loginIdProperty);
         }
 
+        private void ConfigureIdentityGeneration(
+            PropertyBuilder<int> usuarioIdProperty,
+            PropertyBuilder<int> loginIdProperty)
+        {
+            var providerName = Database.ProviderName ?? string.Empty;
+            var isSqlServer = providerName.IndexOf("SqlServer", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isSqlServer)
+            {
+                usuarioIdProperty.ValueGeneratedOnAdd();
+                loginIdProperty.ValueGeneratedOnAdd();
+            }
+            else
+            {
+                usuarioIdProperty.ValueGeneratedNever();
+                loginIdProperty.ValueGeneratedNever();
+            }
+        }
     }
 }
