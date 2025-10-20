@@ -4,10 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NextParkAPI.Data;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
+using HealthChecks.SqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ? Servi�os
+builder.Services.AddHealthChecks()
+    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+builder.Services.AddControllers();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<NextParkContext>(options =>
 {
@@ -66,6 +72,7 @@ if (app.Environment.IsProduction())
     var db = scope.ServiceProvider.GetRequiredService<NextParkContext>();
     db.Database.Migrate(); 
 }
+app.MapHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 

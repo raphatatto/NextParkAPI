@@ -11,9 +11,6 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace NextParkAPI.Controllers;
 
-/// <summary>
-/// Administra os registros de manutenção realizados nas motos do pátio.
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
@@ -26,11 +23,6 @@ public class ManutencaoController : ControllerBase
         _context = context;
     }
 
-    /// <summary>
-    /// Recupera uma lista paginada de manutenções registradas.
-    /// </summary>
-    /// <param name="pageNumber">Número da página desejada (inicia em 1).</param>
-    /// <param name="pageSize">Quantidade de registros por página.</param>
     [HttpGet]
     [SwaggerOperation(
         Summary = "Listar manutenções",
@@ -54,10 +46,6 @@ public class ManutencaoController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary>
-    /// Obtém uma manutenção específica pelo identificador.
-    /// </summary>
-    /// <param name="id">Identificador da manutenção.</param>
     [HttpGet("{id}")]
     [SwaggerOperation(
         Summary = "Obter manutenção",
@@ -72,10 +60,7 @@ public class ManutencaoController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary>
-    /// Registra uma nova manutenção para uma moto.
-    /// </summary>
-    /// <param name="manutencao">Dados da manutenção a ser criada.</param>
+
     [HttpPost]
     [SwaggerOperation(
         Summary = "Cadastrar manutenção",
@@ -96,11 +81,6 @@ public class ManutencaoController : ControllerBase
         return CreatedAtAction(nameof(GetManutencao), new { id = manutencao.IdManutencao }, response);
     }
 
-    /// <summary>
-    /// Atualiza os dados de uma manutenção existente.
-    /// </summary>
-    /// <param name="id">Identificador da manutenção.</param>
-    /// <param name="manutencao">Dados atualizados da manutenção.</param>
     [HttpPut("{id}")]
     [SwaggerOperation(
         Summary = "Atualizar manutenção",
@@ -126,10 +106,6 @@ public class ManutencaoController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Remove um registro de manutenção.
-    /// </summary>
-    /// <param name="id">Identificador da manutenção.</param>
     [HttpDelete("{id}")]
     [SwaggerOperation(
         Summary = "Excluir manutenção",
@@ -145,9 +121,6 @@ public class ManutencaoController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Adiciona enlaces HATEOAS de navegação para o recurso de manutenções.
-    /// </summary>
     private void AddCollectionLinks(PagedResponse<Manutencao> response, int pageNumber, int pageSize)
     {
         AddLink(response.Links, Url.Action(nameof(GetManutencoes), new { pageNumber, pageSize }), "self", "GET");
@@ -164,9 +137,7 @@ public class ManutencaoController : ControllerBase
         AddLink(response.Links, Url.Action(nameof(CreateManutencao)), "create", "POST");
     }
 
-    /// <summary>
-    /// Cria o envelope de resposta de uma manutenção com enlaces HATEOAS.
-    /// </summary>
+
     private ResourceResponse<Manutencao> CreateResourceResponse(Manutencao manutencao)
     {
         var resource = new ResourceResponse<Manutencao>(manutencao);
@@ -176,9 +147,6 @@ public class ManutencaoController : ControllerBase
         return resource;
     }
 
-    /// <summary>
-    /// Registra um enlace HATEOAS caso a URL informada seja válida.
-    /// </summary>
     private static void AddLink(ICollection<Link> links, string? href, string rel, string method)
     {
         if (!string.IsNullOrWhiteSpace(href))

@@ -11,9 +11,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace NextParkAPI.Controllers;
 
-/// <summary>
-/// Controla o cadastro e a disponibilidade das vagas de estacionamento.
-/// </summary>
+
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
@@ -26,11 +24,6 @@ public class VagaController : ControllerBase
         _context = context;
     }
 
-    /// <summary>
-    /// Recupera uma lista paginada de vagas disponíveis no pátio.
-    /// </summary>
-    /// <param name="pageNumber">Número da página desejada (inicia em 1).</param>
-    /// <param name="pageSize">Quantidade de registros por página.</param>
     [HttpGet]
     [SwaggerOperation(
         Summary = "Listar vagas",
@@ -54,10 +47,6 @@ public class VagaController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary>
-    /// Obtém uma vaga específica pelo identificador.
-    /// </summary>
-    /// <param name="id">Identificador da vaga.</param>
     [HttpGet("{id}")]
     [SwaggerOperation(
         Summary = "Obter vaga",
@@ -72,10 +61,6 @@ public class VagaController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary>
-    /// Registra uma nova vaga no pátio.
-    /// </summary>
-    /// <param name="vaga">Dados da vaga que será cadastrada.</param>
     [HttpPost]
     [SwaggerOperation(
         Summary = "Cadastrar vaga",
@@ -90,11 +75,6 @@ public class VagaController : ControllerBase
         return CreatedAtAction(nameof(GetVaga), new { id = vaga.IdVaga }, response);
     }
 
-    /// <summary>
-    /// Atualiza os dados completos de uma vaga existente.
-    /// </summary>
-    /// <param name="id">Identificador da vaga.</param>
-    /// <param name="vaga">Dados atualizados da vaga.</param>
     [HttpPut("{id}")]
     [SwaggerOperation(
         Summary = "Atualizar vaga",
@@ -112,10 +92,6 @@ public class VagaController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Remove uma vaga do pátio.
-    /// </summary>
-    /// <param name="id">Identificador da vaga.</param>
     [HttpDelete("{id}")]
     [SwaggerOperation(
         Summary = "Excluir vaga",
@@ -131,9 +107,6 @@ public class VagaController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Adiciona os enlaces HATEOAS para a navegação da coleção de vagas.
-    /// </summary>
     private void AddCollectionLinks(PagedResponse<Vaga> response, int pageNumber, int pageSize)
     {
         AddLink(response.Links, Url.Action(nameof(GetVagas), new { pageNumber, pageSize }), "self", "GET");
@@ -150,9 +123,6 @@ public class VagaController : ControllerBase
         AddLink(response.Links, Url.Action(nameof(CreateVaga)), "create", "POST");
     }
 
-    /// <summary>
-    /// Cria o envelope de resposta de uma vaga com enlaces HATEOAS.
-    /// </summary>
     private ResourceResponse<Vaga> CreateResourceResponse(Vaga vaga)
     {
         var resource = new ResourceResponse<Vaga>(vaga);
@@ -162,9 +132,6 @@ public class VagaController : ControllerBase
         return resource;
     }
 
-    /// <summary>
-    /// Registra um enlace HATEOAS quando há uma URL válida.
-    /// </summary>
     private static void AddLink(ICollection<Link> links, string? href, string rel, string method)
     {
         if (!string.IsNullOrWhiteSpace(href))

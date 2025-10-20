@@ -91,9 +91,7 @@ namespace NextParkAPI.Controllers
             }
         }
 
-        /// <summary>
-        /// Realiza o login de um usuário existente.
-        /// </summary>
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
