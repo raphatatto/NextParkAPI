@@ -1,34 +1,47 @@
-using System.IO;
+using HealthChecks.Oracle;
+using HealthChecks.UI.Client;
 using System.Reflection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using NextParkAPI.Data;
-using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Mvc;
-using HealthChecks.SqlServer;
+using Oracle.ManagedDataAccess.Client;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
+using NextParkAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddControllers();
 builder.Services.AddHealthChecks()
-    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    .AddCheck("self", () => HealthCheckResult.Healthy("API OK!"))
+    .AddOracle(
+        builder.Configuration["ConnectionStrings:OracleDb"], 
+        name: "OracleDb",
+        timeout: TimeSpan.FromSeconds(5),
+        tags: new[] { "db", "oracle" }
+    );
 
-builder.Services.AddControllers();
-builder.Services.AddControllers();
+// Add the database context to the DI container
 builder.Services.AddDbContext<NextParkContext>(options =>
-{
-    var env = builder.Environment.EnvironmentName;
-    if (env == "Production")
-    {
-        // usa o Azure SQL em produção
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-    }
-    else
-    {
-        // continua usando Oracle no desenvolvimento
-        options.UseOracle(builder.Configuration.GetConnectionString("OracleDb"));
-    }
-});
+    options.UseOracle(builder.Configuration.GetConnectionString("OracleDb")));
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+     {
+         tracerProviderBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("NextParkAPI"))
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddJaegerExporter(o =>
+            {
+                o.AgentHost = builder.Configuration["Jaeger:Host"] ?? "localhost";
+                o.AgentPort = int.TryParse(builder.Configuration["Jaeger:Port"], out var p) ? p : 6831;
+
+            })
+            .AddConsoleExporter();
+     });
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -65,17 +78,18 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// ? Pipeline
-if (app.Environment.IsProduction())
+if (app.Environment.IsDevelopment())
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<NextParkContext>();
-    db.Database.Migrate(); 
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
-app.MapHealthChecks("/health");
+
 app.UseHttpsRedirection();
 app.UseAuthorization();
-
-app.MapControllers(); 
+app.MapControllers();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.Run();
