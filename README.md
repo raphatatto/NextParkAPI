@@ -35,7 +35,7 @@
    ```bash
    dotnet run
    ```
-6. **Acessar o Swagger UI** em `http://localhost/swagger` (ou a porta configurada).
+6. **Acessar o Swagger UI** em `http://localhost:8080/swagger/index.html` (ou a porta configurada).
 
 ---
 
