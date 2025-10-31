@@ -13,7 +13,8 @@ namespace NextParkAPI.Controllers;
 
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
 public class VagaController : ControllerBase
 {
@@ -72,7 +73,10 @@ public class VagaController : ControllerBase
         _context.Vagas.Add(vaga);
         await _context.SaveChangesAsync();
         var response = CreateResourceResponse(vaga);
-        return CreatedAtAction(nameof(GetVaga), new { id = vaga.IdVaga }, response);
+        return CreatedAtAction(
+            nameof(GetVaga),
+            new { version = GetCurrentApiVersion(), id = vaga.IdVaga },
+            response);
     }
 
     [HttpPut("{id}")]
@@ -109,26 +113,28 @@ public class VagaController : ControllerBase
 
     private void AddCollectionLinks(PagedResponse<Vaga> response, int pageNumber, int pageSize)
     {
-        AddLink(response.Links, Url.Action(nameof(GetVagas), new { pageNumber, pageSize }), "self", "GET");
+        var version = GetCurrentApiVersion();
+        AddLink(response.Links, Url.Action(nameof(GetVagas), new { version, pageNumber, pageSize }), "self", "GET");
         if (pageNumber > 1)
         {
-            AddLink(response.Links, Url.Action(nameof(GetVagas), new { pageNumber = pageNumber - 1, pageSize }), "previous", "GET");
+            AddLink(response.Links, Url.Action(nameof(GetVagas), new { version, pageNumber = pageNumber - 1, pageSize }), "previous", "GET");
         }
 
         if (pageNumber < response.TotalPages)
         {
-            AddLink(response.Links, Url.Action(nameof(GetVagas), new { pageNumber = pageNumber + 1, pageSize }), "next", "GET");
+            AddLink(response.Links, Url.Action(nameof(GetVagas), new { version, pageNumber = pageNumber + 1, pageSize }), "next", "GET");
         }
 
-        AddLink(response.Links, Url.Action(nameof(CreateVaga)), "create", "POST");
+        AddLink(response.Links, Url.Action(nameof(CreateVaga), new { version }), "create", "POST");
     }
 
     private ResourceResponse<Vaga> CreateResourceResponse(Vaga vaga)
     {
         var resource = new ResourceResponse<Vaga>(vaga);
-        AddLink(resource.Links, Url.Action(nameof(GetVaga), new { id = vaga.IdVaga }), "self", "GET");
-        AddLink(resource.Links, Url.Action(nameof(UpdateVaga), new { id = vaga.IdVaga }), "update", "PUT");
-        AddLink(resource.Links, Url.Action(nameof(DeleteVaga), new { id = vaga.IdVaga }), "delete", "DELETE");
+        var version = GetCurrentApiVersion();
+        AddLink(resource.Links, Url.Action(nameof(GetVaga), new { version, id = vaga.IdVaga }), "self", "GET");
+        AddLink(resource.Links, Url.Action(nameof(UpdateVaga), new { version, id = vaga.IdVaga }), "update", "PUT");
+        AddLink(resource.Links, Url.Action(nameof(DeleteVaga), new { version, id = vaga.IdVaga }), "delete", "DELETE");
         return resource;
     }
 
@@ -143,5 +149,10 @@ public class VagaController : ControllerBase
                 Method = method
             });
         }
+    }
+
+    private string GetCurrentApiVersion()
+    {
+        return HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
     }
 }

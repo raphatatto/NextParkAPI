@@ -4,7 +4,8 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 namespace NextParkAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class HealthController : ControllerBase
     {
         private readonly HealthCheckService _healthCheckService;

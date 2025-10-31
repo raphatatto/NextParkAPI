@@ -12,7 +12,8 @@ using System.Threading.Tasks;
 namespace NextParkAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly NextParkContext _context;
@@ -77,12 +78,16 @@ namespace NextParkAPI.Controllers
 
                 await transaction.CommitAsync();
 
-                return CreatedAtAction(nameof(Register), new
-                {
-                    message = "Usuário registrado com sucesso.",
-                    usuarioId = usuario.IdUsuario,
-                    email = usuario.NrEmail
-                });
+                var version = GetCurrentApiVersion();
+                return CreatedAtAction(
+                    nameof(Register),
+                    new { version },
+                    new
+                    {
+                        message = "Usuário registrado com sucesso.",
+                        usuarioId = usuario.IdUsuario,
+                        email = usuario.NrEmail
+                    });
             }
             catch
             {
@@ -146,6 +151,11 @@ namespace NextParkAPI.Controllers
             var result = await command.ExecuteScalarAsync();
 
             return Convert.ToInt32(result) > 0;
+        }
+
+        private string GetCurrentApiVersion()
+        {
+            return HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
         }
     }
 }

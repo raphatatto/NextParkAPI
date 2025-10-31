@@ -12,7 +12,8 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace NextParkAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
 public class ManutencaoController : ControllerBase
 {
@@ -78,7 +79,10 @@ public class ManutencaoController : ControllerBase
         _context.Manutencoes.Add(manutencao);
         await _context.SaveChangesAsync();
         var response = CreateResourceResponse(manutencao);
-        return CreatedAtAction(nameof(GetManutencao), new { id = manutencao.IdManutencao }, response);
+        return CreatedAtAction(
+            nameof(GetManutencao),
+            new { version = GetCurrentApiVersion(), id = manutencao.IdManutencao },
+            response);
     }
 
     [HttpPut("{id}")]
@@ -123,27 +127,29 @@ public class ManutencaoController : ControllerBase
 
     private void AddCollectionLinks(PagedResponse<Manutencao> response, int pageNumber, int pageSize)
     {
-        AddLink(response.Links, Url.Action(nameof(GetManutencoes), new { pageNumber, pageSize }), "self", "GET");
+        var version = GetCurrentApiVersion();
+        AddLink(response.Links, Url.Action(nameof(GetManutencoes), new { version, pageNumber, pageSize }), "self", "GET");
         if (pageNumber > 1)
         {
-            AddLink(response.Links, Url.Action(nameof(GetManutencoes), new { pageNumber = pageNumber - 1, pageSize }), "previous", "GET");
+            AddLink(response.Links, Url.Action(nameof(GetManutencoes), new { version, pageNumber = pageNumber - 1, pageSize }), "previous", "GET");
         }
 
         if (pageNumber < response.TotalPages)
         {
-            AddLink(response.Links, Url.Action(nameof(GetManutencoes), new { pageNumber = pageNumber + 1, pageSize }), "next", "GET");
+            AddLink(response.Links, Url.Action(nameof(GetManutencoes), new { version, pageNumber = pageNumber + 1, pageSize }), "next", "GET");
         }
 
-        AddLink(response.Links, Url.Action(nameof(CreateManutencao)), "create", "POST");
+        AddLink(response.Links, Url.Action(nameof(CreateManutencao), new { version }), "create", "POST");
     }
 
 
     private ResourceResponse<Manutencao> CreateResourceResponse(Manutencao manutencao)
     {
         var resource = new ResourceResponse<Manutencao>(manutencao);
-        AddLink(resource.Links, Url.Action(nameof(GetManutencao), new { id = manutencao.IdManutencao }), "self", "GET");
-        AddLink(resource.Links, Url.Action(nameof(UpdateManutencao), new { id = manutencao.IdManutencao }), "update", "PUT");
-        AddLink(resource.Links, Url.Action(nameof(DeleteManutencao), new { id = manutencao.IdManutencao }), "delete", "DELETE");
+        var version = GetCurrentApiVersion();
+        AddLink(resource.Links, Url.Action(nameof(GetManutencao), new { version, id = manutencao.IdManutencao }), "self", "GET");
+        AddLink(resource.Links, Url.Action(nameof(UpdateManutencao), new { version, id = manutencao.IdManutencao }), "update", "PUT");
+        AddLink(resource.Links, Url.Action(nameof(DeleteManutencao), new { version, id = manutencao.IdManutencao }), "delete", "DELETE");
         return resource;
     }
 
@@ -158,5 +164,10 @@ public class ManutencaoController : ControllerBase
                 Method = method
             });
         }
+    }
+
+    private string GetCurrentApiVersion()
+    {
+        return HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
     }
 }
