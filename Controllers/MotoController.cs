@@ -13,7 +13,8 @@ namespace NextParkAPI.Controllers;
 
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
 public class MotoController : ControllerBase
 {
@@ -72,7 +73,10 @@ public class MotoController : ControllerBase
         _context.Motos.Add(moto);
         await _context.SaveChangesAsync();
         var response = CreateResourceResponse(moto);
-        return CreatedAtAction(nameof(GetMoto), new { id = moto.IdMoto }, response);
+        return CreatedAtAction(
+            nameof(GetMoto),
+            new { version = GetCurrentApiVersion(), id = moto.IdMoto },
+            response);
     }
 
     [HttpPut("{id}")]
@@ -109,27 +113,29 @@ public class MotoController : ControllerBase
 
     private void AddCollectionLinks(PagedResponse<Moto> response, int pageNumber, int pageSize)
     {
-        AddLink(response.Links, Url.Action(nameof(GetMotos), new { pageNumber, pageSize }), "self", "GET");
+        var version = GetCurrentApiVersion();
+        AddLink(response.Links, Url.Action(nameof(GetMotos), new { version, pageNumber, pageSize }), "self", "GET");
         if (pageNumber > 1)
         {
-            AddLink(response.Links, Url.Action(nameof(GetMotos), new { pageNumber = pageNumber - 1, pageSize }), "previous", "GET");
+            AddLink(response.Links, Url.Action(nameof(GetMotos), new { version, pageNumber = pageNumber - 1, pageSize }), "previous", "GET");
         }
 
         if (pageNumber < response.TotalPages)
         {
-            AddLink(response.Links, Url.Action(nameof(GetMotos), new { pageNumber = pageNumber + 1, pageSize }), "next", "GET");
+            AddLink(response.Links, Url.Action(nameof(GetMotos), new { version, pageNumber = pageNumber + 1, pageSize }), "next", "GET");
         }
 
-        AddLink(response.Links, Url.Action(nameof(CreateMoto)), "create", "POST");
+        AddLink(response.Links, Url.Action(nameof(CreateMoto), new { version }), "create", "POST");
     }
 
 
     private ResourceResponse<Moto> CreateResourceResponse(Moto moto)
     {
         var resource = new ResourceResponse<Moto>(moto);
-        AddLink(resource.Links, Url.Action(nameof(GetMoto), new { id = moto.IdMoto }), "self", "GET");
-        AddLink(resource.Links, Url.Action(nameof(UpdateMoto), new { id = moto.IdMoto }), "update", "PUT");
-        AddLink(resource.Links, Url.Action(nameof(DeleteMoto), new { id = moto.IdMoto }), "delete", "DELETE");
+        var version = GetCurrentApiVersion();
+        AddLink(resource.Links, Url.Action(nameof(GetMoto), new { version, id = moto.IdMoto }), "self", "GET");
+        AddLink(resource.Links, Url.Action(nameof(UpdateMoto), new { version, id = moto.IdMoto }), "update", "PUT");
+        AddLink(resource.Links, Url.Action(nameof(DeleteMoto), new { version, id = moto.IdMoto }), "delete", "DELETE");
         return resource;
     }
 
@@ -145,5 +151,10 @@ public class MotoController : ControllerBase
                 Method = method
             });
         }
+    }
+
+    private string GetCurrentApiVersion()
+    {
+        return HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
     }
 }
