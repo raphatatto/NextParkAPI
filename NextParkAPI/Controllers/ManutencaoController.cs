@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NextParkAPI.Data;
+using NextParkAPI.ML;
 using NextParkAPI.Models;
 using NextParkAPI.Models.Responses;
 using Swashbuckle.AspNetCore.Annotations;
@@ -169,5 +171,20 @@ public class ManutencaoController : ControllerBase
     private string GetCurrentApiVersion()
     {
         return HttpContext.GetRequestedApiVersion()?.ToString() ?? "1.0";
+    }
+    [HttpPost("predict")]
+    [AllowAnonymous] 
+    [SwaggerOperation(Summary = "Predição de necessidade de manutenção com ML.NET")]
+    public ActionResult<ManutencaoPrediction> PredictManutencao([FromBody] ManutencaoInput input, [FromServices] ManutencaoModelService model)
+    {
+        var pred = model.Prever(input);
+        return Ok(new
+        {
+            pred.NecessitaManutencao,
+            probabilidade_manutencao = pred.Probability,
+            input.Quilometragem,
+            input.IdadeMotoMeses,
+            input.TemperaturaMotor
+        });
     }
 }

@@ -86,7 +86,7 @@
     -d '{
           "idManutencao": 10,
           "dsManutencao": "Troca de óleo",
-          "dtInicio": "2024-05-01",
+          "dtInicio": "2024-05-01", 
           "dtFim": "2024-05-02",
           "idMoto": 1
         }'

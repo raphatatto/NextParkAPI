@@ -8,6 +8,7 @@ using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Data;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization; // ✅ ADICIONADO
 
 namespace NextParkAPI.Controllers
 {
@@ -17,13 +18,17 @@ namespace NextParkAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly NextParkContext _context;
+        private readonly ITokenService _tokenService; // ✅ ADICIONADO
 
-        public AuthController(NextParkContext context)
+        // ✅ ADICIONADO: injeta ITokenService (mantendo o que já tinha)
+        public AuthController(NextParkContext context, ITokenService tokenService)
         {
             _context = context;
+            _tokenService = tokenService;
         }
 
         [HttpPost("register")]
+        [AllowAnonymous] // ✅ ADICIONADO: rota pública
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var emailAlreadyUsed = await EmailExistsAsync(request.Email);
@@ -98,6 +103,7 @@ namespace NextParkAPI.Controllers
 
 
         [HttpPost("login")]
+        [AllowAnonymous] // ✅ ADICIONADO: rota pública
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var login = await _context.Logins
@@ -115,9 +121,18 @@ namespace NextParkAPI.Controllers
                 return Unauthorized(new { message = "E-mail ou senha inválidos." });
             }
 
+            // ✅ ADICIONADO: gera token JWT
+            var token = _tokenService.CreateToken(
+                userId: login.IdUsuario.ToString(),
+                userName: login.NrEmail,
+                roles: new[] { "User" } // ajuste se tiver papéis no seu modelo
+            );
+
             return Ok(new
             {
                 message = "Login realizado com sucesso.",
+                access_token = token,       
+                token_type = "Bearer",     
                 usuarioId = login.IdUsuario,
                 email = login.NrEmail
             });
