@@ -38,7 +38,19 @@
 6. **Acessar o Swagger UI** em `http://localhost:8080/swagger/index.html` (ou a porta configurada).
 
 ---
+## ▶️ Instruções de dos testes da API
+1. **Pré-requisitos**: .NET 8 SDK instalado e acesso a uma instância Oracle acessível pelo aplicativo.
+2. **Clonar o repositório**:
+   ```bash
+   git clone <url-do-repositorio>
+   cd MinhaAPITeste
+   ```
 
+5. **Executar a API**:
+   ```bash
+   dotnet test
+   ```
+---
 ## 📚 Exemplos de Uso dos Endpoints
 ### 🏍️ Motos (`/api/Moto`)
 - **Listar**:
