@@ -101,6 +101,9 @@ public class MotoController : ControllerBase
     }
 
     [HttpPost("{id}/status")]
+    [SwaggerOperation(
+        Summary = "Atualizar Status da moto",
+        Description = "Atualiza a moto pelo id e status.")]
     public async Task<IActionResult> MudarStatus(int id, [FromQuery] string novoStatus)
     {
         var plsql = "BEGIN pkg_nextpark_core.prc_moto_mudar_status(:p_id,:p_st); END;";
@@ -112,6 +115,9 @@ public class MotoController : ControllerBase
     }
 
     [HttpGet("{id}/json")]
+    [SwaggerOperation(
+        Summary = "JSON automatico",
+        Description = "JSON gerado pelo meu script de Banco de dados")]
     public async Task<ActionResult> MotoJson(int id)
     {
         var sql = "SELECT pkg_nextpark_json.fn_moto_json(:p_id) FROM dual";
