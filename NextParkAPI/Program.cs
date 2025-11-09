@@ -125,6 +125,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 });
+builder.Services.AddSingleton<OracleDbService>();
 
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 

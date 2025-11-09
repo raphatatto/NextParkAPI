@@ -8,6 +8,8 @@ using NextParkAPI.Data;
 using NextParkAPI.Models;
 using NextParkAPI.Models.Responses;
 using Swashbuckle.AspNetCore.Annotations;
+using Oracle.ManagedDataAccess.Client;
+using System.Data;
 
 namespace NextParkAPI.Controllers;
 
@@ -19,10 +21,12 @@ namespace NextParkAPI.Controllers;
 public class MotoController : ControllerBase
 {
     private readonly NextParkContext _context;
+    private readonly OracleDbService _oracle;
 
-    public MotoController(NextParkContext context)
+    public MotoController(NextParkContext context, OracleDbService oracle)
     {
         _context = context;
+        _oracle = oracle;
     }
 
     [HttpGet]
@@ -63,21 +67,67 @@ public class MotoController : ControllerBase
     }
 
     [HttpPost]
-    [SwaggerOperation(
-        Summary = "Cadastrar moto",
-        Description = "Registra uma nova moto no pátio e retorna o recurso criado." )]
+    [SwaggerOperation(Summary = "Cadastrar moto (via procedure)")]
     [ProducesResponseType(typeof(ResourceResponse<Moto>), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ResourceResponse<Moto>>> CreateMoto(Moto moto)
     {
-        _context.Motos.Add(moto);
-        await _context.SaveChangesAsync();
-        var response = CreateResourceResponse(moto);
-        return CreatedAtAction(
-            nameof(GetMoto),
-            new { version = GetCurrentApiVersion(), id = moto.IdMoto },
-            response);
+        var plsql = "BEGIN pkg_nextpark_core.prc_moto_criar(:p_id_moto,:p_placa,:p_modelo,:p_status,:p_id_vaga); END;";
+
+        var pars = new[]
+        {
+        new OracleParameter("p_id_moto", OracleDbType.Int32)   { Value = moto.IdMoto },
+        new OracleParameter("p_placa",   OracleDbType.Varchar2){ Value = moto.NrPlaca },
+        new OracleParameter("p_modelo",  OracleDbType.Varchar2){ Value = moto.NmModelo },
+        new OracleParameter("p_status",  OracleDbType.Char)    { Value = moto.StMoto },
+        new OracleParameter("p_id_vaga", OracleDbType.Int32)   { Value = moto.IdVaga }
+    };
+
+        try
+        {
+            await _oracle.ExecProcAsync(plsql, pars);
+        }
+        catch (OracleException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+
+        var created = await _context.Motos.AsNoTracking()
+                            .FirstAsync(m => m.IdMoto == moto.IdMoto);
+
+        var response = CreateResourceResponse(created);
+        return CreatedAtAction(nameof(GetMoto),
+            new { version = GetCurrentApiVersion(), id = created.IdMoto }, response);
     }
+
+    [HttpPost("{id}/status")]
+    public async Task<IActionResult> MudarStatus(int id, [FromQuery] string novoStatus)
+    {
+        var plsql = "BEGIN pkg_nextpark_core.prc_moto_mudar_status(:p_id,:p_st); END;";
+        await _oracle.ExecProcAsync(plsql,
+            new OracleParameter("p_id", OracleDbType.Int32) { Value = id },
+            new OracleParameter("p_st", OracleDbType.Char) { Value = novoStatus }
+        );
+        return NoContent();
+    }
+
+    [HttpGet("{id}/json")]
+    public async Task<ActionResult> MotoJson(int id)
+    {
+        var sql = "SELECT pkg_nextpark_json.fn_moto_json(:p_id) FROM dual";
+        var json = await _oracle.ExecFunctionScalarClobAsync(sql,
+            new OracleParameter("p_id", OracleDbType.Int32) { Value = id });
+        return Content(json ?? "{}", "application/json");
+    }
+
+    [HttpGet("dataset")]
+    public async Task<ActionResult> DatasetJson()
+    {
+        var sql = "SELECT pkg_nextpark_json.fn_dataset_completo FROM dual";
+        var json = await _oracle.ExecFunctionScalarClobAsync(sql);
+        return Content(json ?? "[]", "application/json");
+    }
+
 
     [HttpPut("{id}")]
     [SwaggerOperation(
